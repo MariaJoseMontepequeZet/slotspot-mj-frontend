@@ -1,0 +1,236 @@
+:host {
+    display: block;
+    width: 100%;
+    margin-bottom: 30px;
+}
+
+.navbar {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 12px 25px;
+    background: rgba(30, 12, 58, 0.6);
+    backdrop-filter: blur(15px);
+    -webkit-backdrop-filter: blur(15px);
+    border: 1px solid rgba(157, 78, 221, 0.2);
+    border-radius: 20px;
+    box-shadow: 0 8px 32px rgba(0, 0, 0, 0.3);
+}
+
+.logo {
+    font-family: 'Outfit', sans-serif;
+    font-weight: 800;
+    color: #ffffff;
+    font-size: 1.1rem;
+    text-transform: uppercase;
+    letter-spacing: 1px;
+}
+
+.logo span {
+    color: #9d4edd;
+}
+
+/* Contenedores de Estadísticas Horizontales */
+.stats-container {
+    display: flex;
+    gap: 20px;
+    background: rgba(0, 0, 0, 0.2);
+    padding: 8px 20px;
+    border-radius: 12px;
+    border: 1px solid rgba(157, 78, 221, 0.1);
+}
+
+.stat-item {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    min-width: 50px;
+}
+
+.stat-value {
+    font-weight: 800;
+    color: #9d4edd;
+    font-size: 1rem;
+}
+
+.stat-label {
+    font-size: 0.6rem;
+    text-transform: uppercase;
+    color: #b0a0ca;
+    letter-spacing: 0.5px;
+}
+
+.nav-right {
+    display: flex;
+    align-items: center;
+    gap: 15px;
+}
+
+.nav-actions {
+    display: flex;
+    gap: 8px;
+}
+
+.btn-nav {
+    background: rgba(157, 78, 221, 0.1);
+    border: 1px solid rgba(157, 78, 221, 0.4);
+    color: white;
+    padding: 8px 12px;
+    border-radius: 10px;
+    cursor: pointer;
+    font-family: 'Outfit', sans-serif;
+    font-size: 0.75rem;
+    font-weight: 600;
+    transition: all 0.3s ease;
+}
+
+.btn-nav:hover {
+    background: rgba(157, 78, 221, 0.3);
+    border-color: #9d4edd;
+}
+
+.user-profile-btn {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    padding: 6px 10px 6px 15px;
+    border-left: 1px solid rgba(157, 78, 221, 0.2);
+    background: transparent;
+    border: 1px solid rgba(157, 78, 221, 0.4);
+    border-radius: 12px;
+    cursor: pointer;
+    user-select: none;
+    -webkit-user-select: none;
+    transition: all 0.3s ease;
+}
+
+.user-profile-btn:hover {
+    background: rgba(157, 78, 221, 0.3);
+    border-color: #9d4edd;
+}
+
+.user-name {
+    font-size: 0.85rem;
+    font-weight: 700;
+    color: white;
+    font-family: 'Outfit', sans-serif;
+    pointer-events: none;
+}
+
+.avatar {
+    width: 35px;
+    height: 35px;
+    background: linear-gradient(135deg, #9d4edd, #5a189a);
+    border-radius: 10px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: white;
+    pointer-events: none;
+}
+
+/* ===== RESPONSIVE MOBILE ===== */
+@media (max-width: 768px) {
+    :host {
+        margin-bottom: 15px;
+    }
+
+    .navbar {
+        flex-wrap: wrap;
+        padding: 10px 12px;
+        gap: 10px;
+        border-radius: 14px;
+    }
+
+    .brand {
+        order: 1;
+    }
+
+    .logo-text {
+        font-size: 0.9rem;
+    }
+
+    .stats-container {
+        order: 3;
+        width: 100%;
+        justify-content: space-around;
+        gap: 8px;
+        padding: 6px 10px;
+    }
+
+    .stat-item {
+        min-width: 40px;
+    }
+
+    .stat-value {
+        font-size: 0.85rem;
+    }
+
+    .stat-label {
+        font-size: 0.5rem;
+    }
+
+    .nav-right {
+        order: 2;
+        gap: 8px;
+    }
+
+    .nav-actions {
+        gap: 5px;
+    }
+
+    .btn-nav {
+        padding: 6px 8px;
+        font-size: 0.65rem;
+    }
+
+    .user-profile-btn {
+        padding: 4px 8px;
+        gap: 6px;
+    }
+
+    .user-name {
+        font-size: 0.7rem;
+    }
+
+    .avatar {
+        width: 28px;
+        height: 28px;
+        border-radius: 8px;
+        font-size: 0.8rem;
+    }
+}
+
+@media (max-width: 420px) {
+    .navbar {
+        padding: 8px 10px;
+        gap: 8px;
+        border-radius: 12px;
+    }
+
+    .stats-container {
+        gap: 4px;
+        padding: 5px 6px;
+    }
+
+    .stat-item {
+        min-width: 30px;
+    }
+
+    .stat-value {
+        font-size: 0.75rem;
+    }
+
+    .stat-label {
+        font-size: 0.45rem;
+    }
+
+    .btn-nav {
+        padding: 5px 6px;
+        font-size: 0.6rem;
+    }
+
+    .user-name {
+        display: none;
+    }
+}

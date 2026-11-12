@@ -1,0 +1,30 @@
+.reports-container {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+    gap: 15px;
+    margin-bottom: 20px;
+}
+
+.total-general {
+    grid-column: 1 / -1;
+    /* La tarjeta grande ocupa todo el ancho arriba */
+    background: linear-gradient(135deg, rgba(157, 78, 221, 0.3), rgba(30, 12, 58, 0.8));
+    border: 1px solid #9d4edd;
+}
+
+.report-card {
+    background: rgba(255, 255, 255, 0.03);
+    padding: 20px;
+    border-radius: 15px;
+    border: 1px solid rgba(157, 78, 221, 0.2);
+    text-align: center;
+}
+
+.report-row {
+    border-bottom: 1px solid rgba(157, 78, 221, 0.1);
+    transition: background 0.3s;
+}
+
+.report-row:hover {
+    background: rgba(157, 78, 221, 0.05);
+}
