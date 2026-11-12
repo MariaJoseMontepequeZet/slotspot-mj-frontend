@@ -1,0 +1,25 @@
+name: Desplegar en el servidor
+
+on:
+  push:
+    branches: [main]
+  workflow_dispatch:
+
+concurrency:
+  group: desplegar-slotspot-web
+  cancel-in-progress: false
+
+jobs:
+  desplegar:
+    runs-on: [self-hosted, slotspot]
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Copiar el codigo al servidor
+        run: |
+          destino="$HOME/slotspot/slotspot-mj-frontend/public"
+          mkdir -p "$destino"
+          rsync -a --delete index.html css js "$destino/"
+
+      - name: Desplegar la web
+        run: $HOME/slotspot/desplegar.sh web
