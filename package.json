@@ -1,0 +1,19 @@
+{
+    "name": "slotspot-mj-frontend",
+    "version": "0.1.0",
+    "private": true,
+    "type": "module",
+    "description": "Frontend de SlotSpot MJ, sistema web de administracion de parqueadero",
+    "scripts": {
+        "start": "python -m http.server 8080",
+        "lint": "eslint .",
+        "format": "prettier --write \"js/**/*.js\" \"css/**/*.css\" index.html *.js *.json",
+        "format:check": "prettier --check \"js/**/*.js\" \"css/**/*.css\" index.html *.js *.json"
+    },
+    "devDependencies": {
+        "@eslint/js": "^10.0.1",
+        "eslint": "^10.14.0",
+        "globals": "^17.14.0",
+        "prettier": "^3.10.0"
+    }
+}
