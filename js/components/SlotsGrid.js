@@ -1,4 +1,6 @@
 import { translations, getLang } from '../i18n.js';
+import { CampusStorage } from '../storage.js';
+import { escapeHTML } from '../utils.js';
 import { TOTAL_SLOTS } from '../config.js';
 
 export class SlotsGrid extends HTMLElement {
@@ -20,7 +22,7 @@ export class SlotsGrid extends HTMLElement {
 
     render() {
         const t = translations[getLang()] || translations['es'];
-        const services = JSON.parse(localStorage.getItem('cp_services') || '[]');
+        const services = CampusStorage.getServices();
         const activos = services.filter((s) => s.estado === 'activo');
 
         const typeLabels = {
@@ -39,8 +41,8 @@ export class SlotsGrid extends HTMLElement {
             html += `
                 <div class="slot ${s ? 'occupied' : 'free'}" data-slot="${i}">
                     <span class="num">${i}</span>
-                    <div class="type">${typeLabel}</div>
-                    <span class="plate">${s ? s.placa : t.slot_free}</span>
+                    <div class="type">${escapeHTML(typeLabel)}</div>
+                    <span class="plate">${escapeHTML(s ? s.placa : t.slot_free)}</span>
                 </div>`;
         }
 

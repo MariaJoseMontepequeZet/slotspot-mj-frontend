@@ -1,4 +1,18 @@
+import { readJSON } from './utils.js';
+
 export const CampusStorage = {
+    getServices() {
+        return readJSON('cp_services', []).filter((s) => s && typeof s === 'object');
+    },
+
+    saveServices(services) {
+        localStorage.setItem('cp_services', JSON.stringify(services));
+    },
+
+    getUser() {
+        return readJSON('cp_user', {});
+    },
+
     init() {
         // Tipos de vehículos por defecto
         if (!localStorage.getItem('cp_types')) {
@@ -16,7 +30,7 @@ export const CampusStorage = {
         if (!localStorage.getItem('cp_services')) localStorage.setItem('cp_services', '[]');
 
         // Usuario administrador por defecto
-        if (!localStorage.getItem('cp_user')) {
+        if (!this.getUser().email) {
             const user = {
                 nombre: 'Administrador',
                 email: 'admin@slotspotmj.com',

@@ -1,4 +1,6 @@
 import { translations, getLang } from '../i18n.js';
+import { CampusStorage } from '../storage.js';
+import { escapeHTML } from '../utils.js';
 
 export class IncomeReports extends HTMLElement {
     constructor() {
@@ -12,7 +14,7 @@ export class IncomeReports extends HTMLElement {
 
     render() {
         const t = translations[getLang()] || translations['es'];
-        const services = JSON.parse(localStorage.getItem('cp_services')) || [];
+        const services = CampusStorage.getServices();
         const pagos = services.filter((s) => s.estado === 'finalizado');
 
         const totalGlobal = pagos
@@ -124,8 +126,8 @@ export class IncomeReports extends HTMLElement {
                                               .map(
                                                   (p) => `
                                     <tr class="report-row">
-                                        <td style="padding: 12px 8px; font-weight: bold;">${p.placa}</td>
-                                        <td style="padding: 12px 8px;">${translateTipo(p.tipo)}</td>
+                                        <td style="padding: 12px 8px; font-weight: bold;">${escapeHTML(p.placa)}</td>
+                                        <td style="padding: 12px 8px;">${escapeHTML(translateTipo(p.tipo))}</td>
                                         <td style="padding: 12px 8px; text-align: center; font-size: 0.8rem;">${formatDate(p.entrada)}</td>
                                         <td style="padding: 12px 8px; text-align: center; color: #4ade80; font-size: 0.8rem;">${formatTime(p.entrada)}</td>
                                         <td style="padding: 12px 8px; text-align: center; color: #f87171; font-size: 0.8rem;">${formatTime(p.salida)}</td>
