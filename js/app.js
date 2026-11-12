@@ -94,30 +94,30 @@ document.addEventListener('DOMContentLoaded', () => {
 
     // ===== ACCIONES DE DATOS =====
     window.addEventListener('add-service', (e) => {
-        const services = JSON.parse(localStorage.getItem('cp_services') || '[]');
+        const services = CampusStorage.getServices();
         services.push(e.detail);
-        localStorage.setItem('cp_services', JSON.stringify(services));
+        CampusStorage.saveServices(services);
         refreshSystem();
         renderDashboard();
     });
 
     window.addEventListener('update-service', (e) => {
-        const services = JSON.parse(localStorage.getItem('cp_services') || '[]');
+        const services = CampusStorage.getServices();
         const index = services.findIndex((s) => s.id === e.detail.id);
         if (index !== -1) {
             services[index] = e.detail;
-            localStorage.setItem('cp_services', JSON.stringify(services));
+            CampusStorage.saveServices(services);
             refreshSystem();
             renderDashboard();
         }
     });
 
     window.addEventListener('exit-service', (e) => {
-        const services = JSON.parse(localStorage.getItem('cp_services') || '[]');
+        const services = CampusStorage.getServices();
         const index = services.findIndex((s) => s.id === e.detail.id);
         if (index !== -1) {
             services[index] = e.detail;
-            localStorage.setItem('cp_services', JSON.stringify(services));
+            CampusStorage.saveServices(services);
             refreshSystem();
             renderDashboard();
         }

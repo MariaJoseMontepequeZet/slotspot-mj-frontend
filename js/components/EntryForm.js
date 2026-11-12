@@ -1,4 +1,5 @@
 import { translations, getLang } from '../i18n.js';
+import { CampusStorage } from '../storage.js';
 import { TOTAL_SLOTS } from '../config.js';
 
 export class EntryForm extends HTMLElement {
@@ -192,7 +193,7 @@ export class EntryForm extends HTMLElement {
             const placa = `${prefix}-${nums}${letters}`;
 
             // Obtener servicios activos para validar duplicados
-            const services = JSON.parse(localStorage.getItem('cp_services') || '[]');
+            const services = CampusStorage.getServices();
             const activos = services.filter((s) => s.estado === 'activo');
 
             if (isEdit) {

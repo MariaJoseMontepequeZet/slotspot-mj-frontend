@@ -142,7 +142,8 @@ slotspot-mj-frontend/
 └── js/                         # Lógica de la aplicación
     ├── app.js                  # Controlador principal (Event Bus)
     ├── config.js               # Constantes compartidas (total de slots)
-    ├── storage.js              # Inicialización de localStorage
+    ├── storage.js              # Acceso seguro a localStorage (servicios y usuario)
+    ├── utils.js                # escapeHTML y readJSON
     ├── i18n.js                 # Sistema de internacionalización (ES/EN)
     │
     └── components/             # Web Components (Custom Elements)
@@ -193,13 +194,20 @@ Es el **cerebro de la aplicación**. Se encarga de:
 
 #### `js/storage.js` — Inicialización de Datos
 
-Crea los datos iniciales en `localStorage` si no existen:
+Crea los datos iniciales en `localStorage` si no existen y ofrece acceso seguro a ellos con `getServices()`, `saveServices()` y `getUser()`. Si el JSON guardado está dañado, devuelve un valor por defecto en lugar de romper la aplicación, y si el usuario administrador falta o es inválido, lo recrea.
 
 | Clave | Contenido |
 |-------|-----------|
 | `cp_types` | Tipos de vehículo con código, nombre y tarifa |
 | `cp_services` | Array vacío de servicios |
 | `cp_user` | Usuario admin (`admin@slotspotmj.com` / `Admin123`) |
+
+---
+
+#### `js/utils.js` — Utilidades
+
+- `escapeHTML(valor)`: convierte `&`, `<`, `>`, `"` y `'` en entidades. Se usa en todo dato del usuario que entra en una plantilla con `innerHTML`.
+- `readJSON(clave, valorPorDefecto)`: lee y parsea `localStorage` dentro de un `try/catch` y verifica que el tipo coincida con el valor por defecto.
 
 ---
 
@@ -218,7 +226,7 @@ Sistema de traducción con soporte para **Español** e **Inglés**. Funciones:
 Componente que se muestra al inicio de la aplicación. Características:
 
 - Lee credenciales desde `localStorage` (`cp_user`) para validar dinámicamente
-- **"Recordar credenciales"**: guarda email y contraseña en `localStorage`
+- **"Recordar mi correo"**: guarda solo el correo en `localStorage`. La contraseña nunca se guarda, y la clave antigua `cp_saved_pass` se elimina al abrir el login
 - Botón de **mostrar/ocultar contraseña**
 - Mensajes de error con **animación shake**
 - Si las credenciales son correctas → guarda sesión en `sessionStorage` y dispara `login-success`
@@ -352,7 +360,7 @@ Los cambios se guardan en `localStorage` (`cp_user`) y se actualizan en toda la 
 - Overlay de pantalla completa con fondo del tema
 - Tarjeta centrada con glassmorfismo
 - Grupo de contraseña con botón toggle al lado
-- Checkbox "Recordar credenciales" con accent-color morado
+- Checkbox "Recordar mi correo" con accent-color morado
 - Botón con gradiente morado y efecto hover con sombra
 
 #### `css/profile.css` — Perfil Modal
@@ -414,7 +422,6 @@ Los cambios se guardan en `localStorage` (`cp_user`) y se actualizan en toda la 
 │  cp_services → [{placa, tipo, slot, ...}]     │
 │  cp_lang     → "es" | "en"                    │
 │  cp_saved_email → email guardado (opcional)    │
-│  cp_saved_pass  → password guardado (opcional) │
 │                                               │
 └──────────────────────────────────────────────┘
 ```
@@ -429,7 +436,7 @@ Los cambios se guardan en `localStorage` (`cp_user`) y se actualizan en toda la 
 2. El usuario ingresa email y contraseña
 3. Se valida contra los datos en `localStorage` (`cp_user`)
 4. Si es correcto → se guarda en `sessionStorage` y se muestra el dashboard
-5. Si "Recordar credenciales" está activo → se guardan en `localStorage`
+5. Si "Recordar mi correo" está activo → se guarda solo el correo en `localStorage`
 6. Si es incorrecto → se muestra mensaje de error con animación
 
 ### Registro de Vehículo
@@ -516,6 +523,30 @@ Los cambios se guardan en `localStorage` (`cp_user`) y se actualizan en toda la 
 **Problema:** La tabla de reportes usaba `onmouseover` y `onmouseout` en linea, que la politica CSP del servidor (`script-src 'self'`) bloquea.
 
 **Solucion:** Se reemplazo por la clase `.report-row` con `:hover` en `css/reports.css`.
+
+### 10. HTML sin escapar en las plantillas
+
+**Problema:** Placa, tipo, nombre y correo se insertaban en `innerHTML` sin escapar, de modo que un valor como `<img onerror=...>` en `localStorage` se interpretaba como HTML.
+
+**Solucion:** Se creo `escapeHTML()` en `js/utils.js` y se aplica en la barra, la grilla, los reportes, el perfil y el login.
+
+### 11. Contrasena guardada en el navegador
+
+**Problema:** "Recordar credenciales" guardaba el correo y la contrasena en texto plano en `cp_saved_pass`.
+
+**Solucion:** Ahora solo se recuerda el correo. La clave antigua se elimina automaticamente.
+
+### 12. Datos corruptos rompian la aplicacion
+
+**Problema:** Un JSON invalido en `cp_services` o `cp_user` lanzaba una excepcion al cargar y la aplicacion no arrancaba.
+
+**Solucion:** `readJSON` captura el error y devuelve un valor por defecto. Las lecturas pasan por `CampusStorage.getServices()` y `getUser()`, y el usuario administrador se recrea si falta.
+
+### 13. La barra no reflejaba el nombre nuevo al guardar el perfil
+
+**Problema:** Tras guardar el perfil, la barra seguia mostrando el nombre anterior hasta recargar.
+
+**Solucion:** El perfil dispara el evento `storage-update` al guardar.
 
 ---
 

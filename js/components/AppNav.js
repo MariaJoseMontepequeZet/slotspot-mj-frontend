@@ -1,4 +1,6 @@
 import { translations, getLang } from '../i18n.js';
+import { CampusStorage } from '../storage.js';
+import { escapeHTML } from '../utils.js';
 import { TOTAL_SLOTS } from '../config.js';
 
 export class AppNav extends HTMLElement {
@@ -20,8 +22,8 @@ export class AppNav extends HTMLElement {
 
     render() {
         const t = translations[getLang()] || translations['es'];
-        const services = JSON.parse(localStorage.getItem('cp_services')) || [];
-        const user = JSON.parse(localStorage.getItem('cp_user') || '{}');
+        const services = CampusStorage.getServices();
+        const user = CampusStorage.getUser();
 
         // FILTRO DE SEGURIDAD:
         // 1. Que el estado sea 'activo'.
@@ -32,7 +34,7 @@ export class AppNav extends HTMLElement {
 
         // Función de conteo exacta
         const getCount = (tipo) => {
-            return activos.filter((s) => s.tipo && s.tipo.trim() === tipo).length;
+            return activos.filter((s) => s.tipo && String(s.tipo).trim() === tipo).length;
         };
 
         this.shadowRoot.innerHTML = `
@@ -83,7 +85,7 @@ export class AppNav extends HTMLElement {
                     </div>
                     
                     <button id="btnProfile" class="user-profile-btn">
-                        <span class="user-name">${user.nombre || t.profile_default_name}</span>
+                        <span class="user-name">${escapeHTML(user.nombre || t.profile_default_name)}</span>
                         <div class="avatar"></div>
                     </button>
                 </div>

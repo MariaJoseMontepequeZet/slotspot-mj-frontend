@@ -1,4 +1,6 @@
 import { translations, getLang } from '../i18n.js';
+import { CampusStorage } from '../storage.js';
+import { escapeHTML } from '../utils.js';
 
 export class LoginPage extends HTMLElement {
     constructor() {
@@ -13,7 +15,7 @@ export class LoginPage extends HTMLElement {
     render() {
         const t = translations[getLang()] || translations['es'];
         const savedEmail = localStorage.getItem('cp_saved_email') || '';
-        const savedPass = localStorage.getItem('cp_saved_pass') || '';
+        localStorage.removeItem('cp_saved_pass');
         const rememberChecked = savedEmail ? 'checked' : '';
 
         this.shadowRoot.innerHTML = `
@@ -31,12 +33,12 @@ export class LoginPage extends HTMLElement {
                     <form id="loginForm">
                         <label>${t.login_email}</label>
                         <input type="email" id="email" placeholder="${t.login_placeholder_email}" 
-                               value="${savedEmail}" autocomplete="email" required>
+                               value="${escapeHTML(savedEmail)}" autocomplete="email" required>
 
                         <label>${t.login_password}</label>
                         <div class="password-group">
                             <input type="password" id="password" placeholder="${t.login_placeholder_password}" 
-                                   value="${savedPass}" autocomplete="current-password" required>
+                                   autocomplete="current-password" required>
                             <button type="button" id="togglePass" class="toggle-pass">${t.login_password_show}</button>
                         </div>
 
@@ -82,15 +84,13 @@ export class LoginPage extends HTMLElement {
             if (!email) return this.showError(t.login_error_no_email);
             if (!password) return this.showError(t.login_error_no_password);
 
-            const user = JSON.parse(localStorage.getItem('cp_user') || '{}');
+            const user = CampusStorage.getUser();
 
             if (email === user.email && password === user.password) {
                 if (rememberCheck.checked) {
                     localStorage.setItem('cp_saved_email', email);
-                    localStorage.setItem('cp_saved_pass', password);
                 } else {
                     localStorage.removeItem('cp_saved_email');
-                    localStorage.removeItem('cp_saved_pass');
                 }
 
                 sessionStorage.setItem('cp_logged_in', 'true');
