@@ -1,4 +1,6 @@
 import { translations, getLang, setLang } from '../i18n.js';
+import { CampusStorage } from '../storage.js';
+import { escapeHTML } from '../utils.js';
 
 export class UserProfile extends HTMLElement {
     constructor() {
@@ -24,7 +26,7 @@ export class UserProfile extends HTMLElement {
 
     render() {
         const t = translations[getLang()] || translations['es'];
-        const user = JSON.parse(localStorage.getItem('cp_user') || '{}');
+        const user = CampusStorage.getUser();
 
         this.shadowRoot.innerHTML = `
             <link rel="stylesheet" href="css/profile.css">
@@ -35,8 +37,8 @@ export class UserProfile extends HTMLElement {
                     <!-- Header del perfil -->
                     <div class="profile-header">
                         <div class="profile-avatar-big"></div>
-                        <h2 id="displayName">${user.nombre || t.profile_default_name}</h2>
-                        <p class="profile-email" id="displayEmail">${user.email || 'admin@slotspotmj.com'}</p>
+                        <h2 id="displayName">${escapeHTML(user.nombre || t.profile_default_name)}</h2>
+                        <p class="profile-email" id="displayEmail">${escapeHTML(user.email || 'admin@slotspotmj.com')}</p>
                     </div>
 
                     <div id="profileMsg" class="msg" style="display:none;"></div>
@@ -46,10 +48,10 @@ export class UserProfile extends HTMLElement {
                         <h3>${t.profile_personal_data}</h3>
                         
                         <label>${t.profile_name}</label>
-                        <input type="text" id="inputName" value="${user.nombre || ''}" placeholder="${t.profile_placeholder_name}">
+                        <input type="text" id="inputName" value="${escapeHTML(user.nombre)}" placeholder="${t.profile_placeholder_name}">
                         
                         <label>${t.profile_email}</label>
-                        <input type="email" id="inputEmail" value="${user.email || ''}" placeholder="${t.profile_placeholder_email}">
+                        <input type="email" id="inputEmail" value="${escapeHTML(user.email)}" placeholder="${t.profile_placeholder_email}">
                     </div>
 
                     <div class="settings-section">
@@ -86,7 +88,7 @@ export class UserProfile extends HTMLElement {
 
     setupEvents() {
         const t = translations[getLang()] || translations['es'];
-        const user = JSON.parse(localStorage.getItem('cp_user') || '{}');
+        const user = CampusStorage.getUser();
 
         // Cerrar modal
         this.shadowRoot.getElementById('closeBtn').onclick = () => {
@@ -138,10 +140,9 @@ export class UserProfile extends HTMLElement {
             // Actualizar credenciales guardadas si "recordar" estaba activo
             if (localStorage.getItem('cp_saved_email')) {
                 localStorage.setItem('cp_saved_email', updatedUser.email);
-                if (updatedUser.password !== user.password) {
-                    localStorage.setItem('cp_saved_pass', updatedUser.password);
-                }
             }
+
+            window.dispatchEvent(new CustomEvent('storage-update'));
 
             // Actualizar display
             this.shadowRoot.getElementById('displayName').textContent = newName;

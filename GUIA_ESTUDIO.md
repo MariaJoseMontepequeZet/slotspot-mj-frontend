@@ -289,7 +289,6 @@ this.shadowRoot.innerHTML = `
 | `cp_services` | Todos los servicios (activos y finalizados) | `[{"placa":"P-123ABC","tipo":"Automóvil","slot":1,"estado":"activo",...}]` |
 | `cp_lang` | Idioma seleccionado | `"es"` o `"en"` |
 | `cp_saved_email` | Email guardado (recordar) | `"admin@slotspotmj.com"` |
-| `cp_saved_pass` | Password guardado (recordar) | `"Admin123"` |
 
 **Cómo se usa:**
 ```javascript
