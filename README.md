@@ -7,7 +7,7 @@
 **Propietario:** SlotSpot MJ  
 **Desarrolladora:** María José Montepeque Zet  
 **Tecnologías:** HTML5, CSS3, JavaScript (ES6 Modules), Web Components, localStorage
-**Herramientas de desarrollo:** ESLint, Prettier, EditorConfig
+**Herramientas de desarrollo:** ESLint, Prettier, EditorConfig, Vitest, GitHub Actions
 
 ---
 
@@ -17,15 +17,16 @@
 2. [Requisitos de Ejecución](#requisitos-de-ejecución)
 3. [Cómo Ejecutar el Proyecto](#cómo-ejecutar-el-proyecto)
 4. [Herramientas de Desarrollo](#herramientas-de-desarrollo)
-5. [Despliegue](#despliegue)
-6. [Credenciales de Acceso](#credenciales-de-acceso)
-7. [Estructura del Proyecto](#estructura-del-proyecto)
-8. [Descripción de Archivos](#descripción-de-archivos)
-9. [Arquitectura del Sistema](#arquitectura-del-sistema)
-10. [Funcionalidades Detalladas](#funcionalidades-detalladas)
-11. [Problemas Resueltos](#problemas-resueltos)
-12. [Formato de Placas](#formato-de-placas)
-13. [Tarifas por Vehículo](#tarifas-por-vehículo)
+5. [Pruebas e Integración Continua](#pruebas-e-integración-continua)
+6. [Despliegue](#despliegue)
+7. [Credenciales de Acceso](#credenciales-de-acceso)
+8. [Estructura del Proyecto](#estructura-del-proyecto)
+9. [Descripción de Archivos](#descripción-de-archivos)
+10. [Arquitectura del Sistema](#arquitectura-del-sistema)
+11. [Funcionalidades Detalladas](#funcionalidades-detalladas)
+12. [Problemas Resueltos](#problemas-resueltos)
+13. [Formato de Placas](#formato-de-placas)
+14. [Tarifas por Vehículo](#tarifas-por-vehículo)
 
 ---
 
@@ -85,6 +86,25 @@ Requiere Node.js. Instalar dependencias una vez con `npm install`.
 | `npm run lint` | Revisa el código con ESLint |
 | `npm run format` | Da formato a JS, CSS, HTML y JSON con Prettier |
 | `npm run format:check` | Verifica el formato sin modificar archivos |
+| `npm test` | Ejecuta las pruebas automáticas con Vitest |
+| `npm run test:coverage` | Ejecuta las pruebas y muestra la cobertura |
+
+---
+
+## Pruebas e Integración Continua
+
+Las pruebas viven en `tests/` y usan Vitest con jsdom, de modo que `localStorage` y `window` existen sin abrir un navegador.
+
+| Archivo | Qué verifica |
+|---------|--------------|
+| `tests/billing.test.js` | Horas cobradas (0 minutos, 1 hora exacta, 1 hora y 1 ms, fechas inválidas), tarifas inválidas y totales sin errores de coma flotante |
+| `tests/utils.test.js` | `escapeHTML` con etiquetas, comillas y cierre de atributos, y `readJSON` con datos dañados o de otro tipo |
+| `tests/plate.test.js` | Prefijos por tipo, saneamiento de dígitos y letras, lectura de placas existentes y validación |
+| `tests/store.test.js` | Siembra de datos, lecturas seguras, altas, ediciones, suscripciones y cambios desde otra pestaña |
+
+Los módulos con lógica (`billing.js`, `plate.js`, `store.js` y `utils.js`) tienen 100 % de cobertura. Los componentes de interfaz se verifican a mano en el navegador.
+
+El workflow `.github/workflows/ci.yml` ejecuta ESLint, la verificación de formato y las pruebas en cada pull request hacia `dev` o `main` y en cada push a `dev`. Corre en los servidores de GitHub, no en el servidor propio, por lo que el código de un pull request nunca se ejecuta allí.
 
 ---
 
@@ -124,11 +144,19 @@ slotspot-mj-frontend/
 ├── index.html                  # Página principal (punto de entrada)
 ├── README.md                   # Documentación del proyecto
 ├── .github/workflows/
+│   ├── ci.yml                  # Lint, formato y pruebas en cada pull request
 │   └── desplegar.yml           # Despliegue automatico al hacer push a main
-├── package.json                # Scripts de lint y formato
+├── package.json                # Scripts de lint, formato y pruebas
+├── vitest.config.js            # Configuración de Vitest
 ├── eslint.config.js            # Reglas de ESLint
 ├── .prettierrc.json            # Reglas de Prettier
 ├── .editorconfig               # Estilo de edición compartido
+│
+├── tests/                      # Pruebas automáticas (Vitest)
+│   ├── billing.test.js
+│   ├── plate.test.js
+│   ├── store.test.js
+│   └── utils.test.js
 │
 ├── css/                        # Hojas de estilo
 │   ├── style.css               # Estilos globales y layout principal
@@ -144,6 +172,7 @@ slotspot-mj-frontend/
     ├── config.js               # Constantes compartidas (total de slots)
     ├── store.js                # Almacén central de datos con suscripciones
     ├── billing.js              # Cálculo de horas y cobro por tarifa
+    ├── plate.js                # Prefijos, saneamiento y validación de placas
     ├── utils.js                # escapeHTML y readJSON
     ├── i18n.js                 # Sistema de internacionalización (ES/EN)
     │
@@ -221,6 +250,18 @@ Una sola implementación del cálculo, usada por el formulario al mostrar el tot
 - `calculateCharge(entrada, salida, tipo, tipos)`: devuelve `{ hours, rate, total }` o `null` si no hay tarifa. El total se calcula en centavos para evitar errores de coma flotante.
 
 Si no hay tarifa definida, el formulario lo avisa y no permite dar salida, en lugar de cobrar un valor inventado.
+
+---
+
+#### `js/plate.js` — Placas
+
+Funciones puras que `EntryForm` usa para el formato de la placa y que se pueden probar sin interfaz:
+
+- `getPrefix(tipo)`: prefijo del tipo de vehículo (`P`, `M`, `C`, `B` o `S`), con `P` por defecto.
+- `sanitizeDigits(valor)` y `sanitizeLetters(valor)`: dejan solo dígitos o letras mayúsculas y cortan a 3 caracteres.
+- `parsePlate(placa)`: separa dígitos y letras de una placa guardada.
+- `validatePlate(dígitos, letras)`: devuelve `incomplete`, `numbers`, `letters` o `null` si es válida.
+- `buildPlate(tipo, dígitos, letras)`: arma la placa final, por ejemplo `M-456DEF`.
 
 ---
 
@@ -581,6 +622,12 @@ Los cambios se guardan en `localStorage` (`cp_user`) y se actualizan en toda la 
 **Problema:** Cada componente leía `localStorage` por su cuenta, y los cambios viajaban por eventos globales (`add-service`, `update-service`, `exit-service` y `storage-update`) que `app.js` procesaba y luego volvía a dibujar todo.
 
 **Solucion:** `js/store.js` centraliza lecturas y escrituras y notifica a los componentes suscritos. `app.js` ya no gestiona datos, solo navegación y sesión.
+
+### 16. Reglas de placa atadas al componente
+
+**Problema:** El prefijo, el saneamiento y la validación de la placa vivían dentro de `EntryForm`, mezclados con el DOM, y no se podían probar.
+
+**Solucion:** Se extrajeron a funciones puras en `js/plate.js`, con pruebas automáticas. El formulario solo las invoca.
 
 ---
 

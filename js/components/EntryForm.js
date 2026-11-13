@@ -1,7 +1,21 @@
 import { translations, getLang } from '../i18n.js';
 import { store } from '../store.js';
 import { calculateCharge } from '../billing.js';
+import {
+    buildPlate,
+    getPrefix,
+    parsePlate,
+    sanitizeDigits,
+    sanitizeLetters,
+    validatePlate,
+} from '../plate.js';
 import { TOTAL_SLOTS } from '../config.js';
+
+const PLATE_ERROR_KEYS = {
+    incomplete: 'form_error_incomplete',
+    numbers: 'form_error_numbers',
+    letters: 'form_error_letters',
+};
 
 export class EntryForm extends HTMLElement {
     constructor() {
@@ -18,27 +32,6 @@ export class EntryForm extends HTMLElement {
 
     connectedCallback() {
         this.render();
-    }
-
-    // Mapeo de prefijo según tipo de vehículo
-    getPrefix(tipo) {
-        const prefixes = {
-            Automóvil: 'P',
-            Moto: 'M',
-            Camioneta: 'C',
-            Bicicleta: 'B',
-            Scooter: 'S',
-        };
-        return prefixes[tipo] || 'P';
-    }
-
-    // Parsear placa existente para extraer números y letras
-    parsePlaca(placa) {
-        if (!placa) return { nums: '', letters: '' };
-        const clean = placa.replace(/^[PMCBS]-?/, '');
-        const nums = clean.replace(/[^0-9]/g, '').substring(0, 3);
-        const letters = clean.replace(/[^A-Z]/g, '').substring(0, 3);
-        return { nums, letters };
     }
 
     // Mostrar mensaje de error inline
@@ -58,12 +51,12 @@ export class EntryForm extends HTMLElement {
         const isEdit = this._mode === 'edit';
         let billHTML = '';
         const currentTipo = isEdit ? this._selected.tipo : 'Automóvil';
-        const prefix = this.getPrefix(currentTipo);
+        const prefix = getPrefix(currentTipo);
 
         let parsedNums = '';
         let parsedLetters = '';
         if (isEdit) {
-            const parsed = this.parsePlaca(this._selected.placa);
+            const parsed = parsePlate(this._selected.placa);
             parsedNums = parsed.nums;
             parsedLetters = parsed.letters;
 
@@ -143,21 +136,18 @@ export class EntryForm extends HTMLElement {
 
         // Cambiar prefijo cuando cambia el tipo de vehículo
         tipoSelect.onchange = () => {
-            prefixLabel.textContent = this.getPrefix(tipoSelect.value);
+            prefixLabel.textContent = getPrefix(tipoSelect.value);
         };
 
         // Validar: solo números (sin caracteres especiales)
         numsInput.oninput = () => {
-            numsInput.value = numsInput.value.replace(/[^0-9]/g, '').substring(0, 3);
+            numsInput.value = sanitizeDigits(numsInput.value);
             if (numsInput.value.length === 3) lettersInput.focus();
         };
 
         // Validar: solo letras (sin caracteres especiales)
         lettersInput.oninput = () => {
-            lettersInput.value = lettersInput.value
-                .replace(/[^A-Za-z]/g, '')
-                .toUpperCase()
-                .substring(0, 3);
+            lettersInput.value = sanitizeLetters(lettersInput.value);
         };
 
         // Bloquear pegar caracteres especiales
@@ -183,18 +173,10 @@ export class EntryForm extends HTMLElement {
             const letters = lettersInput.value.toUpperCase();
 
             // Validaciones con mensajes de error inline
-            if (nums.length === 0 && letters.length === 0) {
-                return this.showError(t.form_error_incomplete);
-            }
-            if (nums.length !== 3 || !/^\d{3}$/.test(nums)) {
-                return this.showError(t.form_error_numbers);
-            }
-            if (letters.length !== 3 || !/^[A-Z]{3}$/.test(letters)) {
-                return this.showError(t.form_error_letters);
-            }
+            const plateError = validatePlate(nums, letters);
+            if (plateError) return this.showError(t[PLATE_ERROR_KEYS[plateError]]);
 
-            const prefix = this.getPrefix(tipo);
-            const placa = `${prefix}-${nums}${letters}`;
+            const placa = buildPlate(tipo, nums, letters);
 
             // Obtener servicios activos para validar duplicados
             const activos = store.getActiveServices();
