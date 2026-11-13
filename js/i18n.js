@@ -59,6 +59,7 @@ export const translations = {
         btn_cancel: 'Cancelar',
 
         edit_total_charge: 'Total a cobrar:',
+        billing_rate_missing: 'No hay tarifa definida para este tipo de vehículo.',
 
         reports_title: 'Reporte de Ganancias',
         report_total_accumulated: 'TOTAL ACUMULADO',
@@ -152,6 +153,7 @@ export const translations = {
         btn_cancel: 'Cancel',
 
         edit_total_charge: 'Total to charge:',
+        billing_rate_missing: 'No rate is defined for this vehicle type.',
 
         reports_title: 'Income Report',
         report_total_accumulated: 'TOTAL ACCUMULATED',

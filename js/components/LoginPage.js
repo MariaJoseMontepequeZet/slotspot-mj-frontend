@@ -1,5 +1,5 @@
 import { translations, getLang } from '../i18n.js';
-import { CampusStorage } from '../storage.js';
+import { store } from '../store.js';
 import { escapeHTML } from '../utils.js';
 
 export class LoginPage extends HTMLElement {
@@ -84,7 +84,7 @@ export class LoginPage extends HTMLElement {
             if (!email) return this.showError(t.login_error_no_email);
             if (!password) return this.showError(t.login_error_no_password);
 
-            const user = CampusStorage.getUser();
+            const user = store.getUser();
 
             if (email === user.email && password === user.password) {
                 if (rememberCheck.checked) {
