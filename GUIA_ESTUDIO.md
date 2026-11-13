@@ -15,7 +15,7 @@ index.html
    │
    └── Carga js/app.js (type="module")
           │
-          ├── Importa js/storage.js ──→ Inicializa localStorage
+          ├── Importa js/store.js ────→ Inicializa localStorage
           │                              (cp_user, cp_types, cp_services)
           │
           ├── Importa js/components/LoginPage.js
@@ -71,21 +71,21 @@ customElements.define('login-page', LoginPage); // Registra la etiqueta <login-p
 
 ### 3. "¿Cómo se comunican los componentes entre sí?"
 
-Usando un **patrón Event Bus** con `window.dispatchEvent()` y `window.addEventListener()`.
+Los **datos** pasan por un almacén central, `js/store.js`, con suscripciones. La **navegación** (cambiar de vista) sigue usando eventos de `window`.
 
 ```
-EntryForm.js ──dispara──→ window.dispatchEvent('add-service')
-                                    │
-app.js ◄──────escucha───── window.addEventListener('add-service')
-    │
-    └──→ Guarda en localStorage
-    └──→ Refresca los componentes (dispara 'storage-update')
-                                    │
-AppNav.js ◄──escucha───── window.addEventListener('storage-update')
-SlotsGrid.js ◄──escucha── window.addEventListener('storage-update')
+EntryForm.js ──llama──→ store.addService(...)
+                              │
+                              ├──→ Guarda en localStorage
+                              └──→ Avisa a los suscriptores
+                                          │
+AppNav.js ◄──────────── store.subscribe(render)
+SlotsGrid.js ◄───────── store.subscribe(render)
 ```
 
-**¿Por qué `window` y no `this`?** Porque los componentes están dentro de Shadow DOM. Si usas `this.dispatchEvent()`, el evento puede no llegar al listener global. Con `window.dispatchEvent()` siempre llega.
+Cada componente se suscribe al conectarse y cancela la suscripción en `disconnectedCallback`, para no acumular listeners.
+
+**¿Por qué `window` para la navegación y no `this`?** Porque los componentes están dentro de Shadow DOM. Si usas `this.dispatchEvent()`, el evento puede no llegar al listener global. Con `window.dispatchEvent()` siempre llega.
 
 ---
 

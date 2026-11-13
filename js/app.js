@@ -1,4 +1,4 @@
-import { CampusStorage } from './storage.js';
+import { store } from './store.js';
 import { translations, getLang } from './i18n.js';
 import './components/AppNav.js';
 import './components/EntryForm.js';
@@ -8,7 +8,7 @@ import './components/UserProfile.js';
 import './components/LoginPage.js';
 
 document.addEventListener('DOMContentLoaded', () => {
-    CampusStorage.init();
+    store.init();
 
     const t = translations[getLang()] || translations['es'];
     document.documentElement.lang = getLang();
@@ -16,10 +16,6 @@ document.addEventListener('DOMContentLoaded', () => {
 
     const appContainer = document.querySelector('.app-container');
     const mainContent = document.getElementById('main-content');
-
-    const refreshSystem = () => {
-        window.dispatchEvent(new CustomEvent('storage-update'));
-    };
 
     // ===== VERIFICAR SESIÓN =====
     const isLoggedIn = () => sessionStorage.getItem('cp_logged_in') === 'true';
@@ -90,37 +86,6 @@ document.addEventListener('DOMContentLoaded', () => {
     window.addEventListener('logout', () => {
         sessionStorage.removeItem('cp_logged_in');
         showLogin();
-    });
-
-    // ===== ACCIONES DE DATOS =====
-    window.addEventListener('add-service', (e) => {
-        const services = CampusStorage.getServices();
-        services.push(e.detail);
-        CampusStorage.saveServices(services);
-        refreshSystem();
-        renderDashboard();
-    });
-
-    window.addEventListener('update-service', (e) => {
-        const services = CampusStorage.getServices();
-        const index = services.findIndex((s) => s.id === e.detail.id);
-        if (index !== -1) {
-            services[index] = e.detail;
-            CampusStorage.saveServices(services);
-            refreshSystem();
-            renderDashboard();
-        }
-    });
-
-    window.addEventListener('exit-service', (e) => {
-        const services = CampusStorage.getServices();
-        const index = services.findIndex((s) => s.id === e.detail.id);
-        if (index !== -1) {
-            services[index] = e.detail;
-            CampusStorage.saveServices(services);
-            refreshSystem();
-            renderDashboard();
-        }
     });
 
     // ===== INICIAR =====

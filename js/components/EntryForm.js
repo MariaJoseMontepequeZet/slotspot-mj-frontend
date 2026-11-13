@@ -1,5 +1,6 @@
 import { translations, getLang } from '../i18n.js';
-import { CampusStorage } from '../storage.js';
+import { store } from '../store.js';
+import { calculateCharge } from '../billing.js';
 import { TOTAL_SLOTS } from '../config.js';
 
 export class EntryForm extends HTMLElement {
@@ -66,16 +67,19 @@ export class EntryForm extends HTMLElement {
             parsedNums = parsed.nums;
             parsedLetters = parsed.letters;
 
-            const entrada = new Date(this._selected.entrada);
-            const ahora = new Date();
-            const hours = Math.max(1, Math.ceil((ahora - entrada) / (1000 * 60 * 60)));
-            const rates = { Automóvil: 15, Moto: 5, Camioneta: 20, Bicicleta: 2, Scooter: 3 };
-            const rate = rates[this._selected.tipo] || 10;
-            const total = (hours * rate).toFixed(2);
+            const charge = calculateCharge(
+                this._selected.entrada,
+                new Date(),
+                this._selected.tipo,
+                store.getTypes(),
+            );
+            const priceText = charge
+                ? `${t.edit_total_charge} Q${charge.total} (${charge.hours}h)`
+                : t.billing_rate_missing;
 
             billHTML = `
                 <div class="price-tag">
-                    ${t.edit_total_charge} Q${total} (${hours}h)
+                    ${priceText}
                 </div>`;
         }
 
@@ -193,8 +197,7 @@ export class EntryForm extends HTMLElement {
             const placa = `${prefix}-${nums}${letters}`;
 
             // Obtener servicios activos para validar duplicados
-            const services = CampusStorage.getServices();
-            const activos = services.filter((s) => s.estado === 'activo');
+            const activos = store.getActiveServices();
 
             if (isEdit) {
                 // Al actualizar, verificar que la nueva placa no esté en uso por OTRO vehículo
@@ -209,11 +212,7 @@ export class EntryForm extends HTMLElement {
                     );
                 }
 
-                window.dispatchEvent(
-                    new CustomEvent('update-service', {
-                        detail: { ...this._selected, placa, tipo },
-                    }),
-                );
+                store.updateService({ ...this._selected, placa, tipo });
             } else {
                 const slot = parseInt(this.shadowRoot.getElementById('slot').value);
 
@@ -241,18 +240,14 @@ export class EntryForm extends HTMLElement {
                     );
                 }
 
-                window.dispatchEvent(
-                    new CustomEvent('add-service', {
-                        detail: {
-                            placa,
-                            tipo,
-                            slot,
-                            id: Date.now(),
-                            estado: 'activo',
-                            entrada: new Date().toISOString(),
-                        },
-                    }),
-                );
+                store.addService({
+                    placa,
+                    tipo,
+                    slot,
+                    id: Date.now(),
+                    estado: 'activo',
+                    entrada: new Date().toISOString(),
+                });
             }
             this.clear();
         };
@@ -265,24 +260,22 @@ export class EntryForm extends HTMLElement {
         const exitBtn = this.shadowRoot.getElementById('exitBtn');
         if (exitBtn)
             exitBtn.onclick = () => {
-                const rates = { Automóvil: 15, Moto: 5, Camioneta: 20, Bicicleta: 2, Scooter: 3 };
-                const rate = rates[this._selected.tipo] || 10;
-                const hours = Math.max(
-                    1,
-                    Math.ceil((new Date() - new Date(this._selected.entrada)) / (1000 * 60 * 60)),
+                const salida = new Date();
+                const charge = calculateCharge(
+                    this._selected.entrada,
+                    salida,
+                    this._selected.tipo,
+                    store.getTypes(),
                 );
+                if (!charge) return this.showError(t.billing_rate_missing);
 
-                window.dispatchEvent(
-                    new CustomEvent('exit-service', {
-                        detail: {
-                            ...this._selected,
-                            estado: 'finalizado',
-                            total: (hours * rate).toFixed(2),
-                            salida: new Date().toISOString(),
-                            slot: null,
-                        },
-                    }),
-                );
+                store.updateService({
+                    ...this._selected,
+                    estado: 'finalizado',
+                    total: charge.total,
+                    salida: salida.toISOString(),
+                    slot: null,
+                });
                 this.clear();
             };
     }

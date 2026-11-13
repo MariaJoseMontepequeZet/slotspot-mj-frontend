@@ -1,5 +1,5 @@
 import { translations, getLang, setLang } from '../i18n.js';
-import { CampusStorage } from '../storage.js';
+import { store } from '../store.js';
 import { escapeHTML } from '../utils.js';
 
 export class UserProfile extends HTMLElement {
@@ -26,7 +26,7 @@ export class UserProfile extends HTMLElement {
 
     render() {
         const t = translations[getLang()] || translations['es'];
-        const user = CampusStorage.getUser();
+        const user = store.getUser();
 
         this.shadowRoot.innerHTML = `
             <link rel="stylesheet" href="css/profile.css">
@@ -88,7 +88,7 @@ export class UserProfile extends HTMLElement {
 
     setupEvents() {
         const t = translations[getLang()] || translations['es'];
-        const user = CampusStorage.getUser();
+        const user = store.getUser();
 
         // Cerrar modal
         this.shadowRoot.getElementById('closeBtn').onclick = () => {
@@ -135,14 +135,12 @@ export class UserProfile extends HTMLElement {
             }
 
             // Guardar en localStorage
-            localStorage.setItem('cp_user', JSON.stringify(updatedUser));
+            store.saveUser(updatedUser);
 
             // Actualizar credenciales guardadas si "recordar" estaba activo
             if (localStorage.getItem('cp_saved_email')) {
                 localStorage.setItem('cp_saved_email', updatedUser.email);
             }
-
-            window.dispatchEvent(new CustomEvent('storage-update'));
 
             // Actualizar display
             this.shadowRoot.getElementById('displayName').textContent = newName;

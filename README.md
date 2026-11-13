@@ -142,7 +142,8 @@ slotspot-mj-frontend/
 └── js/                         # Lógica de la aplicación
     ├── app.js                  # Controlador principal (Event Bus)
     ├── config.js               # Constantes compartidas (total de slots)
-    ├── storage.js              # Acceso seguro a localStorage (servicios y usuario)
+    ├── store.js                # Almacén central de datos con suscripciones
+    ├── billing.js              # Cálculo de horas y cobro por tarifa
     ├── utils.js                # escapeHTML y readJSON
     ├── i18n.js                 # Sistema de internacionalización (ES/EN)
     │
@@ -183,24 +184,43 @@ Es el **cerebro de la aplicación**. Se encarga de:
   - `show-dashboard` → renderiza grilla + formulario
   - `open-reports` → renderiza reportes de ganancias
   - `open-profile` → renderiza modal de perfil
-  - `add-service` → agrega vehículo al localStorage
-  - `update-service` → actualiza datos de un vehículo
-  - `exit-service` → marca salida, calcula cobro
-  - `storage-update` → refresca todos los componentes
+
+Los datos ya no viajan por eventos: los componentes leen y escriben mediante `js/store.js` y se actualizan solos al suscribirse a él.
 
 **Problema resuelto:** Los componentes usan Shadow DOM, y los eventos lanzados con `this.dispatchEvent()` no siempre llegaban al listener global. Se solucionó usando `window.dispatchEvent()` directamente.
 
 ---
 
-#### `js/storage.js` — Inicialización de Datos
+#### `js/store.js` — Almacén Central de Datos
 
-Crea los datos iniciales en `localStorage` si no existen y ofrece acceso seguro a ellos con `getServices()`, `saveServices()` y `getUser()`. Si el JSON guardado está dañado, devuelve un valor por defecto en lugar de romper la aplicación, y si el usuario administrador falta o es inválido, lo recrea.
+Es la única puerta de acceso a `localStorage`. Crea los datos iniciales si no existen y expone:
+
+| Método | Descripción |
+|--------|-------------|
+| `init()` | Siembra tipos, servicios y usuario si faltan o son inválidos |
+| `subscribe(fn)` | Registra un listener que se ejecuta tras cada cambio; devuelve la función para cancelarlo |
+| `getTypes()`, `getServices()`, `getActiveServices()`, `getFinishedServices()`, `getUser()` | Lecturas seguras |
+| `addService(s)`, `updateService(s)`, `saveUser(u)` | Escrituras que notifican a los suscriptores |
+
+Si el JSON guardado está dañado, las lecturas devuelven un valor por defecto en lugar de romper la aplicación. También escucha el evento `storage` del navegador, de modo que los cambios hechos en otra pestaña refrescan la interfaz.
 
 | Clave | Contenido |
 |-------|-----------|
 | `cp_types` | Tipos de vehículo con código, nombre y tarifa |
 | `cp_services` | Array vacío de servicios |
 | `cp_user` | Usuario admin (`admin@slotspotmj.com` / `Admin123`) |
+
+---
+
+#### `js/billing.js` — Cobro
+
+Una sola implementación del cálculo, usada por el formulario al mostrar el total y al dar salida:
+
+- `billableHours(entrada, salida)`: horas a cobrar, redondeadas hacia arriba con mínimo 1. Una fecha inválida o una salida anterior a la entrada cuentan como 1 hora.
+- `getRate(tipo, tipos)`: tarifa del tipo leída de `cp_types`. Devuelve `null` si el tipo no existe o la tarifa no es un número válido.
+- `calculateCharge(entrada, salida, tipo, tipos)`: devuelve `{ hours, rate, total }` o `null` si no hay tarifa. El total se calcula en centavos para evitar errores de coma flotante.
+
+Si no hay tarifa definida, el formulario lo avisa y no permite dar salida, en lugar de cobrar un valor inventado.
 
 ---
 
@@ -256,7 +276,7 @@ Renderiza una cuadrícula de **20 slots** con:
 - **Placa visible** en cada slot ocupado
 - **Clic en slot ocupado** → abre el formulario de edición con los datos del vehículo
 
-Escucha el evento `storage-update` para refrescarse automáticamente.
+Se suscribe a `store` para refrescarse automáticamente.
 
 ---
 
@@ -304,7 +324,7 @@ Muestra:
   - Duración calculada (ej: "2h 30m")
   - Total pagado
 
-El cálculo del cobro se basa en: `horas × tarifa_del_tipo`.
+El cálculo del cobro se basa en: `horas × tarifa_del_tipo`, con la tarifa leída de `cp_types` (ver `js/billing.js`).
 
 ---
 
@@ -392,14 +412,14 @@ Los cambios se guardan en `localStorage` (`cp_user`) y se actualizan en toda la 
 │               app.js (Event Bus)              │
 │                                               │
 │  ┌─────────┐  ┌──────────┐  ┌─────────────┐ │
-│  │ login-  │  │ show-    │  │ add/update/ │  │
-│  │ success │  │ dashboard│  │ exit-service│  │
+│  │ login-  │  │ show-    │  │ open-       │  │
+│  │ success │  │ dashboard│  │ reports     │  │
 │  └────┬────┘  └────┬─────┘  └──────┬──────┘ │
 │       │            │               │         │
 │       ▼            ▼               ▼         │
 │  ┌─────────┐ ┌──────────┐  ┌────────────┐   │
-│  │ Show    │ │ Render   │  │ Guardar en │   │
-│  │ App     │ │ Views    │  │ localStorage│  │
+│  │ Show    │ │ Render   │  │ Render     │   │
+│  │ App     │ │ Dashboard│  │ Reports    │   │
 │  └─────────┘ └──────────┘  └────────────┘   │
 └──────────────────────────────────────────────┘
 
@@ -412,7 +432,9 @@ Los cambios se guardan en `localStorage` (`cp_user`) y se actualizan en toda la 
 │  IncomeReports → Reportes de ganancias        │
 │  UserProfile   → Modal de perfil              │
 │                                               │
-│  Comunicación: window.dispatchEvent()         │
+│  Navegación: window.dispatchEvent()           │
+│  Datos: store.js (lecturas, escrituras y      │
+│         suscripciones)                        │
 └──────────────────────────────────────────────┘
 
 ┌──────────── localStorage ────────────────────┐
@@ -540,13 +562,25 @@ Los cambios se guardan en `localStorage` (`cp_user`) y se actualizan en toda la 
 
 **Problema:** Un JSON invalido en `cp_services` o `cp_user` lanzaba una excepcion al cargar y la aplicacion no arrancaba.
 
-**Solucion:** `readJSON` captura el error y devuelve un valor por defecto. Las lecturas pasan por `CampusStorage.getServices()` y `getUser()`, y el usuario administrador se recrea si falta.
+**Solucion:** `readJSON` captura el error y devuelve un valor por defecto. Las lecturas pasan por `store.getServices()` y `getUser()`, y el usuario administrador se recrea si falta.
 
 ### 13. La barra no reflejaba el nombre nuevo al guardar el perfil
 
 **Problema:** Tras guardar el perfil, la barra seguia mostrando el nombre anterior hasta recargar.
 
-**Solucion:** El perfil dispara el evento `storage-update` al guardar.
+**Solucion:** El perfil guarda con `store.saveUser()`, que notifica a los suscriptores, y la barra se actualiza.
+
+### 14. Tarifas escritas a mano y valor inventado
+
+**Problema:** Las tarifas estaban duplicadas en `EntryForm`, una para mostrar el total y otra al dar salida, con un valor por defecto de 10 para cualquier tipo desconocido. `cp_types` existía pero nadie la leía.
+
+**Solucion:** `js/billing.js` calcula el cobro con las tarifas de `cp_types`. Si un tipo no tiene tarifa válida, el formulario lo avisa y bloquea la salida.
+
+### 15. Datos y eventos repartidos por todos los componentes
+
+**Problema:** Cada componente leía `localStorage` por su cuenta, y los cambios viajaban por eventos globales (`add-service`, `update-service`, `exit-service` y `storage-update`) que `app.js` procesaba y luego volvía a dibujar todo.
+
+**Solucion:** `js/store.js` centraliza lecturas y escrituras y notifica a los componentes suscritos. `app.js` ya no gestiona datos, solo navegación y sesión.
 
 ---
 
@@ -578,7 +612,7 @@ El formato de placa es: **`PREFIJO-000XXX`**
 | Scooter | Q3.00 |
 | Bicicleta | Q2.00 |
 
-El cobro se calcula como: **`ceil(horas_de_permanencia) × tarifa`** (mínimo 1 hora).
+El cobro se calcula como: **`ceil(horas_de_permanencia) × tarifa`** (mínimo 1 hora). Las tarifas se leen de `cp_types` en `localStorage`.
 
 ---
 
