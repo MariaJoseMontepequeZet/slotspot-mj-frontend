@@ -1,5 +1,5 @@
 import { translations, getLang } from '../i18n.js';
-import { CampusStorage } from '../storage.js';
+import { store } from '../store.js';
 import { escapeHTML } from '../utils.js';
 
 export class IncomeReports extends HTMLElement {
@@ -14,7 +14,7 @@ export class IncomeReports extends HTMLElement {
 
     render() {
         const t = translations[getLang()] || translations['es'];
-        const services = CampusStorage.getServices();
+        const services = store.getServices();
         const pagos = services.filter((s) => s.estado === 'finalizado');
 
         const totalGlobal = pagos

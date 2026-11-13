@@ -1,5 +1,5 @@
 import { translations, getLang } from '../i18n.js';
-import { CampusStorage } from '../storage.js';
+import { store } from '../store.js';
 import { escapeHTML } from '../utils.js';
 import { TOTAL_SLOTS } from '../config.js';
 
@@ -11,19 +11,19 @@ export class AppNav extends HTMLElement {
 
     connectedCallback() {
         this.render();
-        window.addEventListener('storage-update', this.onUpdate);
+        this.unsubscribe = store.subscribe(this.onUpdate);
     }
 
     disconnectedCallback() {
-        window.removeEventListener('storage-update', this.onUpdate);
+        this.unsubscribe?.();
     }
 
     onUpdate = () => this.render();
 
     render() {
         const t = translations[getLang()] || translations['es'];
-        const services = CampusStorage.getServices();
-        const user = CampusStorage.getUser();
+        const services = store.getServices();
+        const user = store.getUser();
 
         // FILTRO DE SEGURIDAD:
         // 1. Que el estado sea 'activo'.

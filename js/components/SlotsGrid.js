@@ -1,5 +1,5 @@
 import { translations, getLang } from '../i18n.js';
-import { CampusStorage } from '../storage.js';
+import { store } from '../store.js';
 import { escapeHTML } from '../utils.js';
 import { TOTAL_SLOTS } from '../config.js';
 
@@ -11,18 +11,18 @@ export class SlotsGrid extends HTMLElement {
 
     connectedCallback() {
         this.render();
-        window.addEventListener('storage-update', this.onUpdate);
+        this.unsubscribe = store.subscribe(this.onUpdate);
     }
 
     disconnectedCallback() {
-        window.removeEventListener('storage-update', this.onUpdate);
+        this.unsubscribe?.();
     }
 
     onUpdate = () => this.render();
 
     render() {
         const t = translations[getLang()] || translations['es'];
-        const services = CampusStorage.getServices();
+        const services = store.getServices();
         const activos = services.filter((s) => s.estado === 'activo');
 
         const typeLabels = {
