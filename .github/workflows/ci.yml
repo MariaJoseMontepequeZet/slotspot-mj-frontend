@@ -1,0 +1,33 @@
+name: CI
+
+on:
+  pull_request:
+    branches: [dev, main]
+  push:
+    branches: [dev]
+
+permissions:
+  contents: read
+
+jobs:
+  verificar:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+
+      - name: Instalar dependencias
+        run: npm ci
+
+      - name: Revisar el codigo con ESLint
+        run: npm run lint
+
+      - name: Verificar el formato con Prettier
+        run: npm run format:check
+
+      - name: Ejecutar las pruebas
+        run: npm test
