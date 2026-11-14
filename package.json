@@ -7,13 +7,18 @@
     "scripts": {
         "start": "python -m http.server 8080",
         "lint": "eslint .",
-        "format": "prettier --write \"js/**/*.js\" \"css/**/*.css\" index.html *.js *.json",
-        "format:check": "prettier --check \"js/**/*.js\" \"css/**/*.css\" index.html *.js *.json"
+        "test": "vitest run",
+        "test:coverage": "vitest run --coverage",
+        "format": "prettier --write \"js/**/*.js\" \"tests/**/*.js\" \"css/**/*.css\" index.html *.js *.json",
+        "format:check": "prettier --check \"js/**/*.js\" \"tests/**/*.js\" \"css/**/*.css\" index.html *.js *.json"
     },
     "devDependencies": {
         "@eslint/js": "^10.0.1",
+        "@vitest/coverage-v8": "^5.1.0",
         "eslint": "^10.14.0",
         "globals": "^17.14.0",
-        "prettier": "^3.10.0"
+        "jsdom": "^31.0.1",
+        "prettier": "^3.10.0",
+        "vitest": "^5.1.0"
     }
 }
