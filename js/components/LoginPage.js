@@ -1,3 +1,4 @@
+import { almacen, sesion } from '../almacen.js';
 import { translations, getLang } from '../i18n.js';
 import { store } from '../store.js';
 import { escapeHTML } from '../utils.js';
@@ -14,8 +15,8 @@ export class LoginPage extends HTMLElement {
 
     render() {
         const t = translations[getLang()] || translations['es'];
-        const savedEmail = localStorage.getItem('cp_saved_email') || '';
-        localStorage.removeItem('cp_saved_pass');
+        const savedEmail = almacen.getItem('cp_saved_email') || '';
+        almacen.removeItem('cp_saved_pass');
         const rememberChecked = savedEmail ? 'checked' : '';
 
         this.shadowRoot.innerHTML = `
@@ -51,6 +52,8 @@ export class LoginPage extends HTMLElement {
 
                         <button type="submit" id="loginBtn" class="login-btn">${t.login_button}</button>
                     </form>
+
+                    <button type="button" id="demoBtn" class="demo-btn">${t.login_demo_button}</button>
                 </div>
             </div>
         `;
@@ -64,6 +67,10 @@ export class LoginPage extends HTMLElement {
         const passInput = this.shadowRoot.getElementById('password');
         const rememberCheck = this.shadowRoot.getElementById('remember');
         const toggleBtn = this.shadowRoot.getElementById('togglePass');
+
+        this.shadowRoot.getElementById('demoBtn').onclick = () => {
+            window.dispatchEvent(new CustomEvent('demo-login'));
+        };
 
         toggleBtn.onclick = () => {
             if (passInput.type === 'password') {
@@ -88,12 +95,12 @@ export class LoginPage extends HTMLElement {
 
             if (email === user.email && password === user.password) {
                 if (rememberCheck.checked) {
-                    localStorage.setItem('cp_saved_email', email);
+                    almacen.setItem('cp_saved_email', email);
                 } else {
-                    localStorage.removeItem('cp_saved_email');
+                    almacen.removeItem('cp_saved_email');
                 }
 
-                sessionStorage.setItem('cp_logged_in', 'true');
+                sesion.setItem('cp_logged_in', 'true');
                 window.dispatchEvent(new CustomEvent('login-success'));
             } else {
                 this.showError(t.login_error_credentials);

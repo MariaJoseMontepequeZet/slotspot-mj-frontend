@@ -1,5 +1,8 @@
+import { sesion } from './almacen.js';
+import { entrarDemo, restablecerDemo } from './demo.js';
 import { store } from './store.js';
 import { translations, getLang } from './i18n.js';
+import { demoPedidaPorUrl, desactivarDemo, esDemo } from './modo.js';
 import './components/AppNav.js';
 import './components/EntryForm.js';
 import './components/SlotsGrid.js';
@@ -18,7 +21,17 @@ document.addEventListener('DOMContentLoaded', () => {
     const mainContent = document.getElementById('main-content');
 
     // ===== VERIFICAR SESIÓN =====
-    const isLoggedIn = () => sessionStorage.getItem('cp_logged_in') === 'true';
+    const isLoggedIn = () => sesion.getItem('cp_logged_in') === 'true';
+
+    const aviso = document.getElementById('avisoDemo');
+    const actualizarAvisoDemo = () => {
+        const textos = translations[getLang()] || translations['es'];
+        aviso.hidden = !esDemo();
+        if (!esDemo()) return;
+        aviso.querySelector('[data-aviso-titulo]').textContent = textos.demo_banner_title;
+        aviso.querySelector('[data-aviso-texto]').textContent = textos.demo_banner_text;
+        aviso.querySelector('[data-aviso-reiniciar]').textContent = textos.demo_reset_button;
+    };
 
     const showLogin = () => {
         // Ocultar la app y mostrar login
@@ -37,6 +50,7 @@ document.addEventListener('DOMContentLoaded', () => {
         if (loginEl) loginEl.remove();
         // Mostrar la app
         appContainer.style.display = 'block';
+        actualizarAvisoDemo();
         renderDashboard();
     };
 
@@ -82,14 +96,29 @@ document.addEventListener('DOMContentLoaded', () => {
     // Login exitoso
     window.addEventListener('login-success', showApp);
 
+    window.addEventListener('demo-login', () => {
+        entrarDemo();
+        showApp();
+    });
+
+    aviso.querySelector('[data-aviso-reiniciar]').onclick = () => {
+        restablecerDemo();
+        renderDashboard();
+    };
+
     // Logout
     window.addEventListener('logout', () => {
-        sessionStorage.removeItem('cp_logged_in');
+        sesion.removeItem('cp_logged_in');
+        desactivarDemo();
+        actualizarAvisoDemo();
         showLogin();
     });
 
     // ===== INICIAR =====
-    if (isLoggedIn()) {
+    if (demoPedidaPorUrl() && !esDemo()) {
+        entrarDemo();
+        showApp();
+    } else if (isLoggedIn()) {
         showApp();
     } else {
         showLogin();
