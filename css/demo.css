@@ -1,0 +1,53 @@
+.aviso-demo {
+    max-width: 1400px;
+    margin: 0 auto 20px auto;
+    padding: 14px 20px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 16px;
+    flex-wrap: wrap;
+    background: rgba(222, 255, 154, 0.08);
+    border: 1px solid rgba(222, 255, 154, 0.35);
+    border-radius: 14px;
+    color: #deff9a;
+    font-size: 0.85rem;
+    line-height: 1.5;
+}
+
+.aviso-demo[hidden] {
+    display: none;
+}
+
+.aviso-demo p {
+    margin: 0;
+}
+
+.aviso-demo__boton {
+    background: transparent;
+    color: #deff9a;
+    border: 1px solid rgba(222, 255, 154, 0.5);
+    border-radius: 10px;
+    padding: 8px 14px;
+    font-size: 0.8rem;
+    font-weight: 600;
+    cursor: pointer;
+    transition: background 0.2s ease;
+}
+
+.aviso-demo__boton:hover,
+.aviso-demo__boton:focus-visible {
+    background: rgba(222, 255, 154, 0.15);
+}
+
+@media (max-width: 768px) {
+    .aviso-demo {
+        margin-bottom: 12px;
+        padding: 12px 14px;
+        font-size: 0.8rem;
+    }
+
+    .aviso-demo__boton {
+        width: 100%;
+    }
+}

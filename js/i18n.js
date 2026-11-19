@@ -1,7 +1,9 @@
-export const getLang = () => localStorage.getItem('cp_lang') || 'es';
+import { almacen } from './almacen.js';
+
+export const getLang = () => almacen.getItem('cp_lang') || 'es';
 
 export const setLang = (lang) => {
-    localStorage.setItem('cp_lang', lang);
+    almacen.setItem('cp_lang', lang);
     window.location.reload();
 };
 
@@ -12,6 +14,12 @@ export const translations = {
         login_email: 'Correo Electrónico',
         login_password: 'Contraseña',
         login_remember: 'Recordar mi correo',
+        login_demo_button: 'Probar la demo sin registrarte',
+        demo_banner_title: 'Modo demo.',
+        demo_banner_text:
+            'Puedes registrar, editar y dar salida a vehículos. Los datos se guardan solo en tu navegador.',
+        demo_reset_button: 'Restablecer datos de ejemplo',
+        profile_demo_blocked: 'En la demo no se puede modificar el perfil.',
         login_button: 'INICIAR SESIÓN',
         login_placeholder_email: 'admin@slotspotmj.com',
         login_placeholder_password: '••••••••',
@@ -105,6 +113,12 @@ export const translations = {
         login_email: 'Email',
         login_password: 'Password',
         login_remember: 'Remember my email',
+        login_demo_button: 'Try the demo without signing up',
+        demo_banner_title: 'Demo mode.',
+        demo_banner_text:
+            'You can register, edit and check out vehicles. Data is stored only in your browser.',
+        demo_reset_button: 'Reset sample data',
+        profile_demo_blocked: 'The profile cannot be modified in the demo.',
         login_button: 'SIGN IN',
         login_placeholder_email: 'admin@slotspotmj.com',
         login_placeholder_password: '••••••••',

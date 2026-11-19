@@ -196,6 +196,26 @@ input:focus {
     transform: translateY(-2px);
 }
 
+.demo-btn {
+    width: 100%;
+    margin-top: 14px;
+    padding: 14px;
+    background: transparent;
+    color: #deff9a;
+    border: 1px solid rgba(222, 255, 154, 0.45);
+    border-radius: 12px;
+    font-family: 'Outfit', sans-serif;
+    font-size: 0.85rem;
+    font-weight: 700;
+    cursor: pointer;
+    transition: background 0.2s ease;
+}
+
+.demo-btn:hover,
+.demo-btn:focus-visible {
+    background: rgba(222, 255, 154, 0.12);
+}
+
 @media (max-width: 480px) {
     .login-card {
         padding: 30px 20px;

@@ -1,3 +1,5 @@
+import { almacen } from './almacen.js';
+
 const ESCAPES = {
     '&': '&amp;',
     '<': '&lt;',
@@ -10,7 +12,7 @@ export const escapeHTML = (value) => String(value ?? '').replace(/[&<>"']/g, (c)
 
 export const readJSON = (key, fallback) => {
     try {
-        const parsed = JSON.parse(localStorage.getItem(key));
+        const parsed = JSON.parse(almacen.getItem(key));
         const sameShape =
             parsed !== null &&
             typeof parsed === typeof fallback &&

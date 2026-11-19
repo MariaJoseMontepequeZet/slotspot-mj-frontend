@@ -5,6 +5,7 @@
         <meta name="viewport" content="width=device-width, initial-scale=1.0" />
         <title>SlotSpot MJ</title>
         <link rel="stylesheet" href="css/style.css" />
+        <link rel="stylesheet" href="css/demo.css" />
     </head>
 
     <body>
@@ -12,6 +13,14 @@
             <header>
                 <app-nav></app-nav>
             </header>
+
+            <aside id="avisoDemo" class="aviso-demo" role="note" hidden>
+                <p>
+                    <strong data-aviso-titulo></strong>
+                    <span data-aviso-texto></span>
+                </p>
+                <button type="button" class="aviso-demo__boton" data-aviso-reiniciar></button>
+            </aside>
 
             <main class="main-layout" id="main-content">
                 <section class="glass-panel">

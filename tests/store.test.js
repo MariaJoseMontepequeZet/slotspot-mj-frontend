@@ -151,3 +151,51 @@ describe('store', () => {
         });
     });
 });
+
+describe('store con el modo demo', () => {
+    beforeEach(() => {
+        localStorage.clear();
+        sessionStorage.clear();
+    });
+
+    afterEach(() => sessionStorage.clear());
+
+    it('reiniciar borra los datos del espacio actual, los vuelve a sembrar y avisa', () => {
+        store.init();
+        store.addService(servicio(1));
+        const oyente = vi.fn();
+        const cancelar = store.subscribe(oyente);
+
+        store.reiniciar();
+
+        expect(store.getServices()).toEqual([]);
+        expect(store.getTypes()).toHaveLength(5);
+        expect(store.getUser().email).toBe('admin@slotspotmj.com');
+        expect(oyente).toHaveBeenCalledTimes(1);
+        cancelar();
+    });
+
+    it('reiniciar en la demo no toca los datos normales', () => {
+        store.init();
+        store.addService(servicio(1));
+
+        sessionStorage.setItem('cp_demo', '1');
+        store.init();
+        store.addService(servicio(2));
+        store.reiniciar();
+
+        sessionStorage.removeItem('cp_demo');
+        expect(store.getServices().map((s) => s.id)).toEqual([1]);
+    });
+
+    it.each(['cp_demo_services', 'cp_demo_types', 'cp_demo_user'])(
+        'notifica cuando otra pestana cambia %s',
+        (clave) => {
+            const oyente = vi.fn();
+            const cancelar = store.subscribe(oyente);
+            window.dispatchEvent(new StorageEvent('storage', { key: clave }));
+            expect(oyente).toHaveBeenCalledTimes(1);
+            cancelar();
+        },
+    );
+});

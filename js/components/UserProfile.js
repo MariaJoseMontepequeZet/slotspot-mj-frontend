@@ -1,4 +1,6 @@
+import { almacen } from '../almacen.js';
 import { translations, getLang, setLang } from '../i18n.js';
+import { esDemo } from '../modo.js';
 import { store } from '../store.js';
 import { escapeHTML } from '../utils.js';
 
@@ -104,6 +106,8 @@ export class UserProfile extends HTMLElement {
 
         // Guardar cambios
         this.shadowRoot.getElementById('saveBtn').onclick = () => {
+            if (esDemo()) return this.showMsg('profileMsg', t.profile_demo_blocked, true);
+
             const newName = this.shadowRoot.getElementById('inputName').value.trim();
             const newEmail = this.shadowRoot.getElementById('inputEmail').value.trim();
             const currentPass = this.shadowRoot.getElementById('inputCurrentPass').value;
@@ -138,8 +142,8 @@ export class UserProfile extends HTMLElement {
             store.saveUser(updatedUser);
 
             // Actualizar credenciales guardadas si "recordar" estaba activo
-            if (localStorage.getItem('cp_saved_email')) {
-                localStorage.setItem('cp_saved_email', updatedUser.email);
+            if (almacen.getItem('cp_saved_email')) {
+                almacen.setItem('cp_saved_email', updatedUser.email);
             }
 
             // Actualizar display
