@@ -19,14 +19,15 @@
 4. [Herramientas de Desarrollo](#herramientas-de-desarrollo)
 5. [Pruebas e Integración Continua](#pruebas-e-integración-continua)
 6. [Despliegue](#despliegue)
-7. [Credenciales de Acceso](#credenciales-de-acceso)
-8. [Estructura del Proyecto](#estructura-del-proyecto)
-9. [Descripción de Archivos](#descripción-de-archivos)
-10. [Arquitectura del Sistema](#arquitectura-del-sistema)
-11. [Funcionalidades Detalladas](#funcionalidades-detalladas)
-12. [Problemas Resueltos](#problemas-resueltos)
-13. [Formato de Placas](#formato-de-placas)
-14. [Tarifas por Vehículo](#tarifas-por-vehículo)
+7. [Demo para el portafolio](#demo-para-el-portafolio)
+8. [Credenciales de Acceso](#credenciales-de-acceso)
+9. [Estructura del Proyecto](#estructura-del-proyecto)
+10. [Descripción de Archivos](#descripción-de-archivos)
+11. [Arquitectura del Sistema](#arquitectura-del-sistema)
+12. [Funcionalidades Detalladas](#funcionalidades-detalladas)
+13. [Problemas Resueltos](#problemas-resueltos)
+14. [Formato de Placas](#formato-de-placas)
+15. [Tarifas por Vehículo](#tarifas-por-vehículo)
 
 ---
 
@@ -114,11 +115,32 @@ Cada push a `main` despliega el frontend en el servidor propio mediante un runne
 
 1. El workflow `.github/workflows/desplegar.yml` copia solo `index.html`, `css/` y `js/` a `~/slotspot/slotspot-mj-frontend/public` con `rsync`.
 2. Ejecuta `~/slotspot/desplegar.sh web`, que levanta el servicio `web` (Caddy) y espera a que responda sano.
-3. Caddy sirve los archivos estaticos, envia `/api/*` a la API y agrega cabeceras de seguridad (CSP, X-Content-Type-Options, X-Frame-Options, Referrer-Policy y Permissions-Policy).
+3. Caddy sirve los archivos estaticos, envia `/api/*` a la API y agrega cabeceras de seguridad (CSP, X-Content-Type-Options, Referrer-Policy y Permissions-Policy). La CSP solo deja que el propio sitio y el portafolio lo muestren dentro de un `iframe` (`frame-ancestors`). El Caddyfile esta versionado en el repositorio del backend, en `ops/Caddyfile`.
 
 Flujo de ramas: una rama por tarea, pull request hacia `dev` y de `dev` a `main` al cerrar cada entrega. Solo el merge a `main` despliega.
 
 El `.env` y los secretos viven en el servidor, fuera del repositorio.
+
+---
+
+## Demo para el portafolio
+
+La aplicacion se puede probar sin cuenta ni registro, pensada para mostrarla dentro del portafolio en un `iframe`.
+
+| Forma de entrar | Que hace |
+|-----------------|----------|
+| `/?demo=1` | Entra sola a la demo. Es la direccion que usa el `iframe` del portafolio |
+| Boton "Probar la demo sin registrarte" | Entra a la demo con un clic desde el inicio de sesion |
+
+Que incluye la demo:
+
+- **Datos de ejemplo:** 7 vehiculos estacionados y 8 servicios finalizados con sus cobros, para que el panel y los reportes no se vean vacios. Las horas se calculan respecto al momento de entrar, asi que siempre parecen recientes.
+- **Aviso de modo demo** con el boton "Restablecer datos de ejemplo", que descarta los cambios y carga de nuevo los datos iniciales.
+- **Perfil protegido:** en la demo no se puede modificar el perfil.
+- **Datos solo en el navegador:** cada visitante tiene los suyos. No se comparten entre visitantes ni se envian al servidor.
+- **Espacio propio:** la demo guarda en claves `cp_demo_*`, de modo que nunca toca los datos de quien use la aplicacion de forma normal. Al cerrar sesion se sale de la demo.
+
+Para insertarla en el portafolio, el `iframe` debe apuntar a `https://slotspotmj.pamcing.me/?demo=1`, y el servidor debe autorizar al portafolio con la politica `frame-ancestors` (ver `ops/Caddyfile` en el repositorio del backend).
 
 ---
 
@@ -133,6 +155,8 @@ El `.env` y los secretos viven en el servidor, fuera del repositorio.
 > ```javascript
 > localStorage.clear(); sessionStorage.clear(); location.reload();
 > ```
+
+Tambien puedes entrar sin escribir nada con **Probar la demo sin registrarte** (ver la seccion anterior).
 
 ---
 
@@ -153,7 +177,9 @@ slotspot-mj-frontend/
 ├── .editorconfig               # Estilo de edición compartido
 │
 ├── tests/                      # Pruebas automáticas (Vitest)
+│   ├── almacen.test.js
 │   ├── billing.test.js
+│   ├── demo.test.js
 │   ├── plate.test.js
 │   ├── store.test.js
 │   └── utils.test.js
@@ -164,12 +190,16 @@ slotspot-mj-frontend/
 │   ├── entry-form.css          # Estilos del formulario de registro
 │   ├── slots-grid.css          # Estilos del grid de slots/espacios
 │   ├── login.css               # Estilos de la página de login
+│   ├── demo.css                # Aviso de modo demo
 │   ├── profile.css             # Estilos del modal de perfil
 │   └── reports.css             # Estilos de los reportes de ganancias
 │
 └── js/                         # Lógica de la aplicación
     ├── app.js                  # Controlador principal (Event Bus)
     ├── config.js               # Constantes compartidas (total de slots)
+    ├── almacen.js              # localStorage y sessionStorage que no se rompen si el navegador los bloquea
+    ├── modo.js                 # Bandera del modo demo
+    ├── demo.js                 # Datos de ejemplo, entrada y restablecimiento de la demo
     ├── store.js                # Almacén central de datos con suscripciones
     ├── billing.js              # Cálculo de horas y cobro por tarifa
     ├── plate.js                # Prefijos, saneamiento y validación de placas
@@ -238,6 +268,27 @@ Si el JSON guardado está dañado, las lecturas devuelven un valor por defecto e
 | `cp_types` | Tipos de vehículo con código, nombre y tarifa |
 | `cp_services` | Array vacío de servicios |
 | `cp_user` | Usuario admin (`admin@slotspotmj.com` / `Admin123`) |
+
+---
+
+#### `js/almacen.js` — Almacenamiento resistente
+
+Exporta `almacen` (sobre `localStorage`) y `sesion` (sobre `sessionStorage`) con `getItem`, `setItem` y `removeItem`. Toda la aplicacion pasa por ellos. Si el navegador bloquea el almacenamiento (por ejemplo al mostrar la aplicacion dentro de un `iframe` con las cookies de terceros desactivadas), o si una escritura falla por cuota, los datos se guardan en memoria en lugar de lanzar un error. Asi la aplicacion sigue funcionando durante la visita, aunque no persista al cerrar la pestaña.
+
+---
+
+#### `js/modo.js` — Modo demo
+
+Guarda en `sessionStorage` si la sesion actual es la demo (`esDemo`, `activarDemo`, `desactivarDemo`) y detecta `?demo=1` en la direccion (`demoPedidaPorUrl`).
+
+---
+
+#### `js/demo.js` — Demo
+
+- `crearServiciosDemo()`: genera los 7 vehiculos activos y los 8 finalizados, con horas relativas al momento actual y totales calculados con `calculateCharge` y las tarifas vigentes.
+- `sembrarDemo()`: carga los datos de ejemplo solo si la demo no tiene servicios.
+- `entrarDemo()`: activa la demo, siembra los datos y abre la sesion.
+- `restablecerDemo()`: borra el espacio de la demo y lo vuelve a sembrar.
 
 ---
 
@@ -628,6 +679,12 @@ Los cambios se guardan en `localStorage` (`cp_user`) y se actualizan en toda la 
 **Problema:** El prefijo, el saneamiento y la validación de la placa vivían dentro de `EntryForm`, mezclados con el DOM, y no se podían probar.
 
 **Solucion:** Se extrajeron a funciones puras en `js/plate.js`, con pruebas automáticas. El formulario solo las invoca.
+
+### 17. Pantalla en blanco cuando el navegador bloquea el almacenamiento
+
+**Problema:** Mostrar la aplicacion dentro de un `iframe` de otro sitio (el portafolio) con las cookies de terceros desactivadas hace que `localStorage` lance `SecurityError`. La aplicacion leia el almacenamiento sin proteccion y ni siquiera arrancaba.
+
+**Solucion:** `js/almacen.js` envuelve el acceso y usa memoria como respaldo. Se comprobo en un navegador real, con el almacenamiento bloqueado a proposito: la version anterior lanzaba `Uncaught SecurityError` y la nueva funciona completa.
 
 ---
 

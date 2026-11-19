@@ -1,10 +1,10 @@
+import { almacen } from './almacen.js';
+import { esDemo } from './modo.js';
 import { readJSON } from './utils.js';
 
-const KEYS = {
-    services: 'cp_services',
-    types: 'cp_types',
-    user: 'cp_user',
-};
+const NOMBRES = ['services', 'types', 'user'];
+const clave = (nombre) => `${esDemo() ? 'cp_demo_' : 'cp_'}${nombre}`;
+const CLAVES_VIGILADAS = NOMBRES.flatMap((nombre) => [`cp_${nombre}`, `cp_demo_${nombre}`]);
 
 const DEFAULT_TYPES = [
     { codigo: 'MOT', nombre: 'Moto', tarifa: '5.00' },
@@ -23,17 +23,28 @@ const DEFAULT_USER = {
 const listeners = new Set();
 const notify = () => listeners.forEach((listener) => listener());
 const isObject = (value) => value !== null && typeof value === 'object';
-const writeJSON = (key, value) => localStorage.setItem(key, JSON.stringify(value));
+const writeJSON = (key, value) => almacen.setItem(key, JSON.stringify(value));
 
 window.addEventListener('storage', (event) => {
-    if (event.key === null || Object.values(KEYS).includes(event.key)) notify();
+    if (event.key === null || CLAVES_VIGILADAS.includes(event.key)) notify();
 });
 
 export const store = {
     init() {
-        if (store.getTypes().length === 0) writeJSON(KEYS.types, DEFAULT_TYPES);
-        if (!localStorage.getItem(KEYS.services)) writeJSON(KEYS.services, []);
-        if (!store.getUser().email) writeJSON(KEYS.user, DEFAULT_USER);
+        if (store.getTypes().length === 0) writeJSON(clave('types'), DEFAULT_TYPES);
+        if (!almacen.getItem(clave('services'))) writeJSON(clave('services'), []);
+        if (!store.getUser().email) writeJSON(clave('user'), DEFAULT_USER);
+    },
+
+    reemplazarServicios(servicios) {
+        writeJSON(clave('services'), servicios);
+        notify();
+    },
+
+    reiniciar() {
+        NOMBRES.forEach((nombre) => almacen.removeItem(clave(nombre)));
+        store.init();
+        notify();
     },
 
     subscribe(listener) {
@@ -42,11 +53,11 @@ export const store = {
     },
 
     getTypes() {
-        return readJSON(KEYS.types, []).filter(isObject);
+        return readJSON(clave('types'), []).filter(isObject);
     },
 
     getServices() {
-        return readJSON(KEYS.services, []).filter(isObject);
+        return readJSON(clave('services'), []).filter(isObject);
     },
 
     getActiveServices() {
@@ -58,16 +69,16 @@ export const store = {
     },
 
     getUser() {
-        return readJSON(KEYS.user, {});
+        return readJSON(clave('user'), {});
     },
 
     saveUser(user) {
-        writeJSON(KEYS.user, user);
+        writeJSON(clave('user'), user);
         notify();
     },
 
     addService(service) {
-        writeJSON(KEYS.services, [...store.getServices(), service]);
+        writeJSON(clave('services'), [...store.getServices(), service]);
         notify();
     },
 
@@ -76,7 +87,7 @@ export const store = {
         const index = services.findIndex((item) => item.id === service.id);
         if (index === -1) return false;
         services[index] = service;
-        writeJSON(KEYS.services, services);
+        writeJSON(clave('services'), services);
         notify();
         return true;
     },
